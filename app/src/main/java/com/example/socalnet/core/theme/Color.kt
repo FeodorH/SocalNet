@@ -1,4 +1,4 @@
-package com.example.socalnet.ui.theme
+package com.example.socalnet.core.theme
 
 import androidx.compose.ui.graphics.Color
 
