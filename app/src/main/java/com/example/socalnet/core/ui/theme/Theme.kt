@@ -1,4 +1,4 @@
-package com.example.socalnet.core.theme
+package com.example.socalnet.core.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
