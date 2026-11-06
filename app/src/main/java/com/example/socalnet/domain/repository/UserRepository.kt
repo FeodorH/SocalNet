@@ -15,5 +15,7 @@ interface UserRepository {
         name: String? = null,
         bio: String? = null,
         avatarUrl: String? = null,
+        avatarPublicId: String? = null,
+        removeAvatar: Boolean = false
     ): AppResult<User>
 }

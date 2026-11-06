@@ -55,5 +55,6 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth.ktx)
     implementation(libs.firebase.firestore.ktx)
-    implementation("javax.inject:javax.inject:1")
+    implementation(libs.javax.inject)
+    implementation(libs.cloudinary.android)
 }

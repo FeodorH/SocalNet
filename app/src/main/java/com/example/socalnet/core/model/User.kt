@@ -7,6 +7,7 @@ data class User (
     val email: String,
     val name: String,
     val avatarUrl: String? = null,
+    val avatarPublicId: String? = null,
     val bio: String? = null,
     val createdAt: Instant,
 )

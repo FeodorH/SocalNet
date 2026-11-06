@@ -12,7 +12,8 @@ data class CreateUserRequest(
 data class UpdateUserRequest(
     val name: String? = null,
     val bio: String? = null,
-    val avatarUrl: String? = null
+    val avatarUrl: String? = null,
+    val avatarPublicId: String? = null
 )
 
 data class UserResponse(
@@ -20,6 +21,7 @@ data class UserResponse(
     val email: String = "",
     val name: String = "",
     val avatarUrl: String? = null,
+    val avatarPublicId: String? = null,
     val bio: String? = null,
     val createdAt: Timestamp? = null
 )

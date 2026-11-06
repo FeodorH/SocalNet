@@ -21,7 +21,10 @@ fun PostResponse.toDomain(
         id = id,
         author = author,
         text = text,
-        images = imageUrls.map { ImageRef.Remote(it) },
+        images = imageUrls.mapIndexed { index, url ->
+            val publicId = imagePublicIds.getOrNull(index) // Безопасно берем ID по индексу
+            ImageRef.Remote(url, publicId)
+        },
         createdAt = createdAt.toDomainInstant(),
         updatedAt = updatedAt?.toDomainInstant(),
         reactions = reactionsByType.toReactionSummary(reactionsTotal),
@@ -35,13 +38,13 @@ fun PostResponse.toDomain(
  */
 fun PostDraft.toCreateMap(
     authorId: String,
-    uploadedImageUrls: List<String>
+    uploadedImages: List<ImageRef.Remote>
 ): Map<String, Any?> {
     return mapOf(
         "authorId" to authorId,
         "text" to text,
-        "imageUrls" to uploadedImageUrls,
-        // Начальные значения счетчиков реакций
+        "imageUrls" to uploadedImages.map { it.url },
+        "imagePublicIds" to uploadedImages.map { it.publicId },
         "reactionsTotal" to 0L,
         "reactionsByType" to emptyMap<String, Long>()
     )

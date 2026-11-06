@@ -14,6 +14,7 @@ fun UserResponse.toDomain(): User {
         email = email,
         name = name,
         avatarUrl = avatarUrl,
+        avatarPublicId = avatarPublicId,
         bio = bio,
         createdAt = createdAt.toDomainInstant()
     )
@@ -21,32 +22,19 @@ fun UserResponse.toDomain(): User {
 
 /**
  * Маппинг доменной модели в Map для записи при создании.
- * Заметьте: мы НЕ передаем id и createdAt.
- * createdAt добавится в репозитории через FieldValue.serverTimestamp().
  */
 fun User.toCreateMap(): Map<String, Any?> {
     return mapOf(
         "email" to email,
         "name" to name,
         "avatarUrl" to avatarUrl,
+        "avatarPublicId" to avatarPublicId,
         "bio" to bio
     )
 }
 
 /**
- * Маппинг доменной модели в Map для обновления.
- * Включаем только те поля, которые не null.
- */
-fun User.toUpdateMap(): Map<String, Any?> {
-    val map = mutableMapOf<String, Any?>()
-    if (name.isNotBlank()) map["name"] = name
-    if (bio != null) map["bio"] = bio
-    if (avatarUrl != null) map["avatarUrl"] = avatarUrl
-    return map
-}
-
-/**
- * Вспомогательные маппер для Request DTO.
+ * Маппинг Request DTO для создания.
  */
 fun CreateUserRequest.toMap(): Map<String, Any?> {
     return mapOf(
@@ -55,10 +43,18 @@ fun CreateUserRequest.toMap(): Map<String, Any?> {
     )
 }
 
+/**
+ * Маппинг Request DTO для обновления.
+ */
 fun UpdateUserRequest.toMap(): Map<String, Any?> {
     val map = mutableMapOf<String, Any?>()
     name?.let { map["name"] = it }
     bio?.let { map["bio"] = it }
-    avatarUrl?.let { map["avatarUrl"] = it }
+
+    // Обновляем аватарку только если она передана
+    if (avatarUrl != null) {
+        map["avatarUrl"] = avatarUrl
+        map["avatarPublicId"] = avatarPublicId
+    }
     return map
 }

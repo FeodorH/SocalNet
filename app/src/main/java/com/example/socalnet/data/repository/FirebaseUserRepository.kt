@@ -6,9 +6,9 @@ import com.example.socalnet.core.model.User
 import com.example.socalnet.core.utils.AppDispatchers
 import com.example.socalnet.data.dto.UserResponse
 import com.example.socalnet.data.mapper.toDomain
-import com.example.socalnet.domain.repository.AuthRepository
 import com.example.socalnet.domain.repository.UserRepository
 import com.google.firebase.Firebase
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -19,7 +19,6 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class FirebaseUserRepository @Inject constructor(
-    private val authRepository: AuthRepository,
     private val dispatchers: AppDispatchers
 ) : UserRepository {
 
@@ -65,16 +64,29 @@ class FirebaseUserRepository @Inject constructor(
         userId: String,
         name: String?,
         bio: String?,
-        avatarUrl: String?
+        avatarUrl: String?,
+        avatarPublicId: String?,
+        removeAvatar: Boolean
     ): AppResult<User> = withContext(dispatchers.io) {
         try {
             val updates = mutableMapOf<String, Any>()
+
             name?.let { updates["name"] = it }
             bio?.let { updates["bio"] = it }
-            avatarUrl?.let { updates["avatarUrl"] = it }
 
-            if (updates.isEmpty()) {
-                return@withContext getUser(userId)
+            // Логика работы с аватаркой
+            if (removeAvatar) {
+                updates["avatarUrl"] = FieldValue.delete()
+                updates["avatarPublicId"] = FieldValue.delete()
+            } else if (avatarUrl != null) {
+                if (avatarPublicId == null) {
+                    // Защита от "битых" данных: URL есть, а ID нет
+                    return@withContext AppResult.Failure(
+                        AppError.Validation(AppError.Validation.Field.NAME, "Не передан publicId для аватара")
+                    )
+                }
+                updates["avatarUrl"] = avatarUrl
+                updates["avatarPublicId"] = avatarPublicId
             }
 
             val userRef = usersCollection.document(userId)
