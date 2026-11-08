@@ -18,26 +18,37 @@ class CreatePostUseCase(
     private val auth: AuthRepository,
     private val posts: PostRepository,
     private val media: MediaRepository
-    ) {
-    suspend operator fun invoke(draft: PostDraft): AppResult<Post>{
+) {
+    suspend operator fun invoke(draft: PostDraft): AppResult<Post> {
         PostValidator.validate(draft.text, draft.images.size)?.let { return AppResult.Failure(it) }
 
         val userId = auth.currentUserId.first() ?: return AppResult.Failure(AppError.Unauthorized)
 
         val uploadBatchId = IdGenerator.generate()
-        val uploaded = mutableListOf<ImageRef.Remote>()
+        val uploadedRefs = mutableListOf<ImageRef.Remote>()
+        val uploadedTokens = mutableListOf<String>()
 
         for ((index, image) in draft.images.withIndex()) {
             val cloudinaryPath = "socialnet/posts/$uploadBatchId/$index"
             when (val r = media.upload(image, cloudinaryPath)) {
-                is AppResult.Success -> uploaded += r.data
+                is AppResult.Success -> {
+                    uploadedRefs += r.data.imageRef
+                    r.data.deleteToken?.let { uploadedTokens += it }
+                }
                 is AppResult.Failure -> {
-                    media.deleteAll(uploaded.map { it.url })
+                    // Компенсация по токенам
+                    media.deleteByTokens(uploadedTokens)
                     return r
                 }
             }
         }
-        return posts.createPost(userId, draft.text, uploaded)
+
+        val postResult = posts.createPost(userId, draft.text, uploadedRefs)
+        if (postResult is AppResult.Failure) {
+            media.deleteByTokens(uploadedTokens)
+        }
+
+        return postResult
     }
 }
 
@@ -71,21 +82,25 @@ class UpdatePostUseCase(
         PostValidator.validate(text, existingImages.size + addedImages.size)
             ?.let { return AppResult.Failure(it) }
 
-        val uploaded = mutableListOf<ImageRef.Remote>()
+        val uploadedRefs = mutableListOf<ImageRef.Remote>()
+        val uploadedTokens = mutableListOf<String>()
         val uploadBatchId = IdGenerator.generate()
 
         for ((index, image) in addedImages.withIndex()) {
             val path = "socialnet/posts/$postId/${uploadBatchId}_$index"
             when (val r = media.upload(image, path)) {
-                is AppResult.Success -> uploaded += r.data
+                is AppResult.Success -> {
+                    uploadedRefs += r.data.imageRef
+                    r.data.deleteToken?.let { uploadedTokens += it }
+                }
                 is AppResult.Failure -> {
-                    media.deleteAll(uploaded.map { it.url })
+                    media.deleteByTokens(uploadedTokens)
                     return r
                 }
             }
         }
 
-        val finalImages = existingImages + uploaded
+        val finalImages = existingImages + uploadedRefs
         val updateResult = posts.updatePost(
             userId = userId,
             postId = postId,
@@ -95,14 +110,8 @@ class UpdatePostUseCase(
         )
 
         if (updateResult is AppResult.Failure) {
-            media.deleteAll(uploaded.map { it.url })
+            media.deleteByTokens(uploadedTokens)
             return updateResult
-        }
-
-        if (removedImageUrls.isNotEmpty()) {
-            media.deleteAll(removedImageUrls).onFailure {
-                // logger.w("Не удалось удалить старые картинки с Cloudinary", it)
-            }
         }
 
         return updateResult

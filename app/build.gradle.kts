@@ -1,8 +1,20 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     id("com.google.gms.google-services")
+    id("com.google.dagger.hilt.android")
+    id("com.google.devtools.ksp")
 }
+
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.inputStream().use { load(it) }
+    }
+}
+val cloudinaryCloudName: String = localProperties.getProperty("CLOUDINARY_CLOUD_NAME") ?: ""
 
 android {
     namespace = "com.example.socalnet"
@@ -18,6 +30,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "CLOUDINARY_CLOUD_NAME", "\"$cloudinaryCloudName\"")
     }
 
     buildTypes {
@@ -33,6 +47,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -57,4 +72,9 @@ dependencies {
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.javax.inject)
     implementation(libs.cloudinary.android)
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+    implementation(libs.logging.interceptor)
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.android.compiler)
 }

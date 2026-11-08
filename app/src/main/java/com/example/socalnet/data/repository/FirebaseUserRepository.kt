@@ -80,7 +80,6 @@ class FirebaseUserRepository @Inject constructor(
                 updates["avatarPublicId"] = FieldValue.delete()
             } else if (avatarUrl != null) {
                 if (avatarPublicId == null) {
-                    // Защита от "битых" данных: URL есть, а ID нет
                     return@withContext AppResult.Failure(
                         AppError.Validation(AppError.Validation.Field.NAME, "Не передан publicId для аватара")
                     )

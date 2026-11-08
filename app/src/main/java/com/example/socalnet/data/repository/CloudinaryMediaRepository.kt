@@ -9,7 +9,10 @@ import com.example.socalnet.core.common.AppResult
 import com.example.socalnet.core.model.ImageRef
 import com.example.socalnet.core.utils.AppDispatchers
 import com.example.socalnet.data.dto.CloudinaryUploadResult
+import com.example.socalnet.core.model.ImageUploadResult
+import com.example.socalnet.data.remote.cloudinary.CloudinaryApi
 import com.example.socalnet.domain.repository.MediaRepository
+import jakarta.inject.Named
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
@@ -17,16 +20,22 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class CloudinaryMediaRepository @Inject constructor(
-    private val dispatchers: AppDispatchers
+    private val dispatchers: AppDispatchers,
+    private val cloudinaryApi: CloudinaryApi,
+    @Named("cloudinaryCloudName") private val cloudName: String
 ) : MediaRepository {
 
-    override suspend fun upload(local: ImageRef.Local, path: String): AppResult<ImageRef.Remote> =
+    override suspend fun upload(local: ImageRef.Local, path: String): AppResult<ImageUploadResult> =
         withContext(dispatchers.io) {
             try {
                 val uri = Uri.parse(local.uri)
                 val response = uploadFlow(uri, path).first()
-                // Возвращаем и URL, и public_id (обязательно сохраним его в Firestore!)
-                AppResult.Success(ImageRef.Remote(response.secureUrl, response.publicId))
+                AppResult.Success(
+                    ImageUploadResult(
+                        imageRef = ImageRef.Remote(response.secureUrl, response.publicId),
+                        deleteToken = response.deleteToken
+                    )
+                )
             } catch (e: Exception) {
                 AppResult.Failure(mapCloudinaryError(e))
             }
@@ -43,12 +52,13 @@ class CloudinaryMediaRepository @Inject constructor(
                 override fun onSuccess(requestId: String, resultData: Map<*, *>) {
                     val url = resultData["secure_url"] as? String
                     val publicId = resultData["public_id"] as? String
+                    val deleteToken = resultData["delete_token"] as? String
 
                     if (url != null && publicId != null) {
-                        trySend(CloudinaryUploadResult(url, publicId))
+                        trySend(CloudinaryUploadResult(url, publicId, deleteToken))
                         close()
                     } else {
-                        close(Exception("Cloudinary: missing secure_url or public_id"))
+                        close(Exception("Cloudinary: missing required fields"))
                     }
                 }
 
@@ -65,16 +75,44 @@ class CloudinaryMediaRepository @Inject constructor(
         awaitClose { /* отмена */ }
     }
 
-    override suspend fun delete(url: String): AppResult<Unit> = withContext(dispatchers.io) {
-        // Клиент физически не может удалить файл (нет API Secret).
-        // Мы просто логируем это и возвращаем Success,
-        // чтобы Use Case не падал. Файл удалит GitHub Actions.
-        AppResult.Success(Unit)
-    }
+    override suspend fun deleteByToken(token: String): AppResult<Unit> =
+        withContext(dispatchers.io) {
+            try {
+                val response = cloudinaryApi.deleteByToken(cloudName, token)
+                if (response.isSuccessful) {
+                    AppResult.Success(Unit)
+                } else {
+                    AppResult.Failure(
+                        AppError.Server(
+                            code = response.code().toString(),
+                            details = response.errorBody()?.string()
+                        )
+                    )
+                }
+            } catch (e: Exception) {
+                AppResult.Failure(AppError.Unknown(e))
+            }
+        }
 
-    override suspend fun deleteAll(urls: List<String>): AppResult<Unit> = withContext(dispatchers.io) {
-        AppResult.Success(Unit) // Аналогично
-    }
+    override suspend fun deleteByTokens(tokens: List<String>): AppResult<Unit> =
+        withContext(dispatchers.io) {
+            val failures = tokens.mapNotNull { token ->
+                when (val r = deleteByToken(token)) {
+                    is AppResult.Success -> null
+                    is AppResult.Failure -> token to r.error
+                }
+            }
+            if (failures.isEmpty()) {
+                AppResult.Success(Unit)
+            } else {
+                AppResult.Failure(
+                    AppError.Server(
+                        code = "DELETE_BY_TOKEN_PARTIAL",
+                        details = "Не удалось удалить ${failures.size}/${tokens.size}"
+                    )
+                )
+            }
+        }
 
     private fun mapCloudinaryError(e: Exception): AppError {
         return if (e.message?.contains("network", ignoreCase = true) == true) {
