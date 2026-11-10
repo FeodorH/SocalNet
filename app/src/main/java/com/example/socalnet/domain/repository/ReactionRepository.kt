@@ -6,7 +6,6 @@ import com.example.socalnet.core.model.ReactionType
 import kotlinx.coroutines.flow.Flow
 
 interface ReactionRepository {
-    var currentReactionType: Flow<ReactionType>
 
     suspend fun setReaction(userId: String, postId: String, type: ReactionType): AppResult<ReactionSummary>
 

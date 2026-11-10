@@ -16,4 +16,9 @@ object CloudinaryConfigModule {
     @Singleton
     @Named("cloudinaryCloudName")
     fun provideCloudinaryCloudName(): String = BuildConfig.CLOUDINARY_CLOUD_NAME
+
+    @Provides
+    @Singleton
+    @Named("cloudinaryUploadPreset")
+    fun provideCloudinaryUploadPreset(): String = BuildConfig.CLOUDINARY_UPLOAD_PRESET
 }

@@ -31,6 +31,4 @@ interface PostRepository {
         pageSize: Int,
     ): AppResult<PostPage>
 
-    /** Realtime для экрана профиля (без пагинации, ограниченный лимит). */
-    fun observeUserPosts(userId: String, limit: Long): Flow<List<Post>>
 }

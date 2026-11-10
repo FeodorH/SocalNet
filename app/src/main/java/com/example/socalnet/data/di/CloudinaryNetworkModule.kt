@@ -17,11 +17,13 @@ object CloudinaryNetworkModule {
 
     @Provides
     @Singleton
-    fun provideCloudinaryApi(): CloudinaryApi {
-        return Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(CloudinaryApi::class.java)
-    }
+    fun provideRetrofit(): Retrofit = Retrofit.Builder()
+        .baseUrl(BASE_URL)
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+
+    @Provides
+    @Singleton
+    fun provideCloudinaryApi(retrofit: Retrofit): CloudinaryApi =
+        retrofit.create(CloudinaryApi::class.java)
 }

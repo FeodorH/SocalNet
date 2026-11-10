@@ -22,7 +22,8 @@ import javax.inject.Inject
 class CloudinaryMediaRepository @Inject constructor(
     private val dispatchers: AppDispatchers,
     private val cloudinaryApi: CloudinaryApi,
-    @Named("cloudinaryCloudName") private val cloudName: String
+    @Named("cloudinaryCloudName") private val cloudName: String,
+    @Named("cloudinaryUploadPreset") private val uploadPreset: String,
 ) : MediaRepository {
 
     override suspend fun upload(local: ImageRef.Local, path: String): AppResult<ImageUploadResult> =
@@ -43,7 +44,7 @@ class CloudinaryMediaRepository @Inject constructor(
 
     private fun uploadFlow(uri: Uri, folder: String) = callbackFlow {
         MediaManager.get().upload(uri)
-            .unsigned("unsigned_preset")
+            .unsigned(uploadPreset)
             .option("folder", folder)
             .callback(object : UploadCallback {
                 override fun onStart(requestId: String) {}
@@ -79,16 +80,13 @@ class CloudinaryMediaRepository @Inject constructor(
         withContext(dispatchers.io) {
             try {
                 val response = cloudinaryApi.deleteByToken(cloudName, token)
-                if (response.isSuccessful) {
-                    AppResult.Success(Unit)
-                } else {
-                    AppResult.Failure(
-                        AppError.Server(
-                            code = response.code().toString(),
-                            details = response.errorBody()?.string()
-                        )
+                if (response.isSuccessful) AppResult.Success(Unit)
+                else AppResult.Failure(
+                    AppError.Server(
+                        code = response.code().toString(),
+                        details = response.errorBody()?.string()
                     )
-                }
+                )
             } catch (e: Exception) {
                 AppResult.Failure(AppError.Unknown(e))
             }
