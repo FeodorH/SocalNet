@@ -12,6 +12,7 @@ import com.example.socalnet.data.mapper.toEntity
 import com.example.socalnet.domain.repository.remote.FeedRepository
 import com.example.socalnet.domain.repository.common.OfflineFirstFeedRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -22,10 +23,12 @@ class OfflineFirstFeedRepositoryImpl @Inject constructor(
     private val dispatchers: AppDispatchers,
 ) : OfflineFirstFeedRepository {
 
-    override fun observeFeed(type: FeedType, userId: String): Flow<List<Post>> {
+    override fun observeFeed(type: FeedType, userId: String?): Flow<List<Post>> {
         val source = when (type) {
             FeedType.GENERAL -> postDao.observeGeneralFeed(limit = FEED_WINDOW)
-            FeedType.SUBSCRIPTIONS -> postDao.observeSubscriptionFeed(userId, limit = FEED_WINDOW)
+            FeedType.SUBSCRIPTIONS -> userId
+                ?.let { postDao.observeSubscriptionFeed(it, limit = FEED_WINDOW) }
+                ?: emptyFlow()
         }
         return source.map { entities -> entities.map { it.toDomain() } }
     }

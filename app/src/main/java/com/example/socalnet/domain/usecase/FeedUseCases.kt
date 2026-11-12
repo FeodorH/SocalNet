@@ -24,8 +24,7 @@ class ObserveFeedUseCase @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     operator fun invoke(type: FeedType): Flow<List<Post>> {
         return authRepository.currentUserId.flatMapLatest { userId ->
-            if (userId == null) flowOf(emptyList())
-            else feeds.observeFeed(type, userId)
+            feeds.observeFeed(type, userId)
         }
     }
 }

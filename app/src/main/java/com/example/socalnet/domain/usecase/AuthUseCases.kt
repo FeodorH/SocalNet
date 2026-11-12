@@ -4,8 +4,9 @@ import com.example.socalnet.core.common.AppResult
 import com.example.socalnet.core.model.User
 import com.example.socalnet.domain.repository.common.OfflineFirstAuthRepository
 import com.example.socalnet.domain.vaildation.AuthValidator
+import jakarta.inject.Inject
 
-class RegisterUseCases(private val auth: OfflineFirstAuthRepository) {
+class RegisterUseCases @Inject constructor(private val auth: OfflineFirstAuthRepository) {
     suspend operator fun invoke(email: String, password: String, name: String): AppResult<User> {
         AuthValidator.validateEmail(email)?.let { return AppResult.Failure(it) }
         AuthValidator.validatePassword(password)?.let { return AppResult.Failure(it) }
@@ -14,7 +15,7 @@ class RegisterUseCases(private val auth: OfflineFirstAuthRepository) {
     }
 }
 
-class LoginUseCase(private val auth: OfflineFirstAuthRepository) {
+class LoginUseCase @Inject constructor(private val auth: OfflineFirstAuthRepository) {
     suspend operator fun invoke(email: String, password: String): AppResult<User> {
         AuthValidator.validateEmail(email)?.let { return AppResult.Failure(it) }
         AuthValidator.validatePassword(password)?.let { return AppResult.Failure(it) }
@@ -22,13 +23,13 @@ class LoginUseCase(private val auth: OfflineFirstAuthRepository) {
     }
 }
 
-class ResetPasswordUseCase(private val auth: OfflineFirstAuthRepository) {
+class ResetPasswordUseCase @Inject constructor(private val auth: OfflineFirstAuthRepository) {
     suspend operator fun invoke(email: String): AppResult<Unit> {
         AuthValidator.validateEmail(email)?.let { return AppResult.Failure(it) }
         return auth.sendPasswordReset(email.trim())
     }
 }
 
-class LogoutUseCase(private val auth: OfflineFirstAuthRepository) {
+class LogoutUseCase @Inject constructor(private val auth: OfflineFirstAuthRepository) {
     suspend operator fun invoke(): AppResult<Unit> = auth.logout()
 }

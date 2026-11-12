@@ -57,3 +57,12 @@ class UpdateProfileUseCase @Inject constructor(
         )
     }
 }
+
+/**
+* Синхронизация профиля текущего пользователя (pull-to-refresh).
+*/
+class SyncCurrentUserUseCase @Inject constructor(
+    private val auth: OfflineFirstAuthRepository
+) {
+    suspend operator fun invoke(): AppResult<User> = auth.syncCurrentUser()
+}

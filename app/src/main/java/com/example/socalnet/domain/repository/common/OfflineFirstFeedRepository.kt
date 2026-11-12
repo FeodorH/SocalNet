@@ -15,7 +15,7 @@ interface OfflineFirstFeedRepository {
      *   (SQL-подзапрос по таблице subscriptions).
      * Мгновенно, без сети.
      */
-    fun observeFeed(type: FeedType, userId: String): Flow<List<Post>>
+    fun observeFeed(type: FeedType, userId: String?): Flow<List<Post>>
 
     /**
      * Загрузка следующей страницы из сети с записью в Room.

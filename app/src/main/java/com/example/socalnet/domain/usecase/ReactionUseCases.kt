@@ -7,6 +7,7 @@ import com.example.socalnet.core.model.ReactionType
 import com.example.socalnet.domain.repository.common.OfflineFirstAuthRepository
 import com.example.socalnet.domain.repository.common.OfflineFirstReactionRepository
 import jakarta.inject.Inject
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
 class ToggleReactionUseCase @Inject constructor(
@@ -27,4 +28,15 @@ class ToggleReactionUseCase @Inject constructor(
             reactionRepository.setReaction(userId, postId, type)
         }
     }
+}
+
+/**
+ * Реакция текущего пользователя на пост.
+ * Используется на экране поста и в карточке поста.
+ */
+class ObserveMyReactionUseCase @Inject constructor(
+    private val reactions: OfflineFirstReactionRepository
+) {
+    operator fun invoke(postId: String): Flow<ReactionType?> =
+        reactions.observeMyReaction(postId)
 }
