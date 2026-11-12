@@ -1,4 +1,4 @@
-package com.example.socalnet.data.repository
+package com.example.socalnet.data.repository.remote
 
 import android.net.Uri
 import com.cloudinary.android.MediaManager
@@ -7,17 +7,18 @@ import com.cloudinary.android.callback.UploadCallback
 import com.example.socalnet.core.common.AppError
 import com.example.socalnet.core.common.AppResult
 import com.example.socalnet.core.model.ImageRef
+import com.example.socalnet.core.model.ImageUploadResult
 import com.example.socalnet.core.utils.AppDispatchers
 import com.example.socalnet.data.dto.CloudinaryUploadResult
-import com.example.socalnet.core.model.ImageUploadResult
 import com.example.socalnet.data.remote.cloudinary.CloudinaryApi
-import com.example.socalnet.domain.repository.MediaRepository
+import com.example.socalnet.domain.repository.remote.MediaRepository
 import jakarta.inject.Named
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import kotlin.collections.get
 
 class CloudinaryMediaRepository @Inject constructor(
     private val dispatchers: AppDispatchers,

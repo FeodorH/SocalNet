@@ -1,4 +1,4 @@
-package com.example.socalnet.data.repository
+package com.example.socalnet.data.repository.remote
 
 import com.example.socalnet.core.common.AppError
 import com.example.socalnet.core.common.AppResult
@@ -6,7 +6,7 @@ import com.example.socalnet.core.model.ReactionSummary
 import com.example.socalnet.core.model.ReactionType
 import com.example.socalnet.core.utils.AppDispatchers
 import com.example.socalnet.data.mapper.toReactionSummary
-import com.example.socalnet.domain.repository.ReactionRepository
+import com.example.socalnet.domain.repository.remote.ReactionRepository
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue

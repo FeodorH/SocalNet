@@ -1,12 +1,10 @@
-package com.example.socalnet.domain.repository
+package com.example.socalnet.domain.repository.remote
 
 import com.example.socalnet.core.common.AppResult
 import com.example.socalnet.core.model.ImageRef
 import com.example.socalnet.core.model.PageCursor
 import com.example.socalnet.core.model.Post
-import com.example.socalnet.core.model.PostDraft
 import com.example.socalnet.core.model.PostPage
-import kotlinx.coroutines.flow.Flow
 
 interface PostRepository {
     suspend fun createPost(

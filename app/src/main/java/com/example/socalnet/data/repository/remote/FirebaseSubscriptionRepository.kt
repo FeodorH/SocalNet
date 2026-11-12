@@ -1,4 +1,4 @@
-package com.example.socalnet.data.repository
+package com.example.socalnet.data.repository.remote
 
 import com.example.socalnet.core.common.AppError
 import com.example.socalnet.core.common.AppResult
@@ -9,9 +9,10 @@ import com.example.socalnet.core.utils.AppDispatchers
 import com.example.socalnet.core.utils.CursorCodec
 import com.example.socalnet.data.dto.UserResponse
 import com.example.socalnet.data.mapper.toDomain
-import com.example.socalnet.domain.repository.AuthRepository
-import com.example.socalnet.domain.repository.SubscriptionRepository
+import com.example.socalnet.domain.repository.remote.AuthRepository
+import com.example.socalnet.domain.repository.remote.SubscriptionRepository
 import com.google.firebase.Firebase
+import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.firestore
@@ -173,7 +174,7 @@ class FirebaseSubscriptionRepository @Inject constructor(
      * Полные User-объекты подгружаются параллельно.
      */
     private suspend fun fetchUserPage(
-        collectionPath: com.google.firebase.firestore.CollectionReference,
+        collectionPath: CollectionReference,
         cursor: PageCursor?,
         pageSize: Int
     ): AppResult<UserPage> {

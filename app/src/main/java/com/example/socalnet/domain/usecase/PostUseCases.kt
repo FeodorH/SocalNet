@@ -4,19 +4,21 @@ import com.example.socalnet.core.common.AppError
 import com.example.socalnet.core.common.AppResult
 import com.example.socalnet.core.common.onFailure
 import com.example.socalnet.core.model.ImageRef
+import com.example.socalnet.core.model.PageCursor
 import com.example.socalnet.core.model.Post
 import com.example.socalnet.core.model.PostDraft
 import com.example.socalnet.core.utils.IdGenerator
-import com.example.socalnet.domain.repository.AuthRepository
-import com.example.socalnet.domain.repository.MediaRepository
-import com.example.socalnet.domain.repository.PostRepository
+import com.example.socalnet.domain.repository.common.OfflineFirstAuthRepository
+import com.example.socalnet.domain.repository.common.OfflineFirstPostRepository
+import com.example.socalnet.domain.repository.remote.MediaRepository
 import com.example.socalnet.domain.vaildation.PostValidator
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import java.util.UUID
+import javax.inject.Inject
 
-class CreatePostUseCase(
-    private val auth: AuthRepository,
-    private val posts: PostRepository,
+class CreatePostUseCase @Inject constructor(
+    private val auth: OfflineFirstAuthRepository,
+    private val posts: OfflineFirstPostRepository,
     private val media: MediaRepository
 ) {
     suspend operator fun invoke(draft: PostDraft): AppResult<Post> {
@@ -36,7 +38,6 @@ class CreatePostUseCase(
                     r.data.deleteToken?.let { uploadedTokens += it }
                 }
                 is AppResult.Failure -> {
-                    // Компенсация по токенам
                     media.deleteByTokens(uploadedTokens)
                     return r
                 }
@@ -47,14 +48,13 @@ class CreatePostUseCase(
         if (postResult is AppResult.Failure) {
             media.deleteByTokens(uploadedTokens)
         }
-
         return postResult
     }
 }
 
-class UpdatePostUseCase(
-    private val auth: AuthRepository,
-    private val posts: PostRepository,
+class UpdatePostUseCase @Inject constructor(
+    private val auth: OfflineFirstAuthRepository,
+    private val posts: OfflineFirstPostRepository,
     private val media: MediaRepository
 ) {
     suspend operator fun invoke(
@@ -65,7 +65,8 @@ class UpdatePostUseCase(
     ): AppResult<Post> {
         val userId = auth.currentUserId.first() ?: return AppResult.Failure(AppError.Unauthorized)
 
-        val originalPost = when (val r = posts.getPost(postId)) {
+        // syncPost: сначала сеть, при ошибке — кэш
+        val originalPost = when (val r = posts.syncPost(postId)) {
             is AppResult.Success -> r.data
             is AppResult.Failure -> return r
         }
@@ -113,15 +114,37 @@ class UpdatePostUseCase(
             media.deleteByTokens(uploadedTokens)
             return updateResult
         }
-
         return updateResult
     }
 }
 
-class DeletePostUseCase(private val posts: PostRepository) {
+class DeletePostUseCase @Inject constructor(
+    private val posts: OfflineFirstPostRepository
+) {
     suspend operator fun invoke(postId: String): AppResult<Unit> = posts.deletePost(postId)
 }
 
-class GetPostUseCase(private val posts: PostRepository) {
-    suspend operator fun invoke(postId: String): AppResult<Post> = posts.getPost(postId)
+class GetPostUseCase @Inject constructor(
+    private val posts: OfflineFirstPostRepository
+) {
+    suspend operator fun invoke(postId: String): AppResult<Post> = posts.syncPost(postId)
+}
+
+// --- НОВЫЕ: для профиля ---
+
+class ObserveUserPostsUseCase @Inject constructor(
+    private val posts: OfflineFirstPostRepository
+) {
+    /** Реактивно из Room. */
+    operator fun invoke(userId: String): Flow<List<Post>> = posts.observeUserPosts(userId)
+}
+
+class SyncUserPostsUseCase @Inject constructor(
+    private val posts: OfflineFirstPostRepository
+) {
+    /** Сеть → Room. Возвращает курсор следующей страницы. */
+    suspend operator fun invoke(
+        userId: String,
+        cursor: PageCursor? = null
+    ): AppResult<PageCursor?> = posts.syncUserPosts(userId, cursor)
 }

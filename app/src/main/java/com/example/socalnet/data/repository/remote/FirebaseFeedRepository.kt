@@ -1,17 +1,22 @@
-package com.example.socalnet.data.repository
+package com.example.socalnet.data.repository.remote
+
 import com.example.socalnet.core.common.AppError
 import com.example.socalnet.core.common.AppResult
-import com.example.socalnet.core.model.*
+import com.example.socalnet.core.model.FeedType
+import com.example.socalnet.core.model.PageCursor
+import com.example.socalnet.core.model.Post
+import com.example.socalnet.core.model.PostAuthor
+import com.example.socalnet.core.model.PostPage
+import com.example.socalnet.core.model.ReactionType
 import com.example.socalnet.core.utils.AppDispatchers
 import com.example.socalnet.core.utils.CursorCodec
 import com.example.socalnet.data.dto.PostResponse
 import com.example.socalnet.data.dto.UserResponse
 import com.example.socalnet.data.mapper.toDomain
-import com.example.socalnet.domain.repository.AuthRepository
-import com.example.socalnet.domain.repository.FeedRepository
-import com.example.socalnet.domain.repository.SubscriptionRepository
+import com.example.socalnet.domain.repository.remote.AuthRepository
+import com.example.socalnet.domain.repository.remote.FeedRepository
+import com.example.socalnet.domain.repository.remote.SubscriptionRepository
 import com.google.firebase.Firebase
-import com.google.firebase.Timestamp
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.async
@@ -58,7 +63,7 @@ class FirebaseFeedRepository @Inject constructor(
     ): AppResult<PostPage> {
         var query = postsCollection
             .orderBy("createdAt", Query.Direction.DESCENDING)
-            .limit(pageSize.toLong())
+            .limit((pageSize + 1).toLong())
 
         if (cursor != null) {
             val (timestamp, postId) = CursorCodec.decode(cursor)
@@ -176,18 +181,19 @@ class FirebaseFeedRepository @Inject constructor(
         }
     }
 
-    private suspend fun fetchAuthors(authorIds: List<String>): Map<String, PostAuthor> = coroutineScope {
-        val authors = authorIds.map { id ->
-            async {
-                val snapshot = usersCollection.document(id).get().await()
-                snapshot.toObject(UserResponse::class.java)
-            }
-        }.awaitAll().filterNotNull()
+    private suspend fun fetchAuthors(authorIds: List<String>): Map<String, PostAuthor> =
+        coroutineScope {
+            val authors = authorIds.map { id ->
+                async {
+                    val snapshot = usersCollection.document(id).get().await()
+                    snapshot.toObject(UserResponse::class.java)
+                }
+            }.awaitAll().filterNotNull()
 
-        authors.associate { user ->
-            user.id to PostAuthor(user.id, user.name, user.avatarUrl)
+            authors.associate { user ->
+                user.id to PostAuthor(user.id, user.name, user.avatarUrl)
+            }
         }
-    }
 
     private suspend fun fetchMyReactions(
         postIds: List<String>,

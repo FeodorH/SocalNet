@@ -1,24 +1,27 @@
-package com.example.socalnet.data.repository
+package com.example.socalnet.data.repository.remote
 
 import com.example.socalnet.core.common.AppError
 import com.example.socalnet.core.common.AppResult
-import com.example.socalnet.core.model.*
+import com.example.socalnet.core.model.ImageRef
+import com.example.socalnet.core.model.PageCursor
+import com.example.socalnet.core.model.Post
+import com.example.socalnet.core.model.PostAuthor
+import com.example.socalnet.core.model.PostPage
+import com.example.socalnet.core.model.ReactionType
 import com.example.socalnet.core.utils.AppDispatchers
 import com.example.socalnet.core.utils.CursorCodec
 import com.example.socalnet.data.dto.PostResponse
 import com.example.socalnet.data.dto.UserResponse
 import com.example.socalnet.data.mapper.toDomain
-import com.example.socalnet.domain.repository.AuthRepository
-import com.example.socalnet.domain.repository.PostRepository
+import com.example.socalnet.domain.repository.remote.AuthRepository
+import com.example.socalnet.domain.repository.remote.PostRepository
 import com.google.firebase.Firebase
-import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
-import java.util.Date
 import javax.inject.Inject
 
 class FirebasePostRepository @Inject constructor(
@@ -55,7 +58,8 @@ class FirebasePostRepository @Inject constructor(
             val postResponse = snapshot.toObject(PostResponse::class.java)
                 ?: return@withContext AppResult.Failure(AppError.NotFound)
 
-            val author = getAuthor(userId) ?: return@withContext AppResult.Failure(AppError.NotFound)
+            val author =
+                getAuthor(userId) ?: return@withContext AppResult.Failure(AppError.NotFound)
 
             AppResult.Success(postResponse.toDomain(author))
         } catch (e: Exception) {
@@ -86,7 +90,8 @@ class FirebasePostRepository @Inject constructor(
             val postResponse = snapshot.toObject(PostResponse::class.java)
                 ?: return@withContext AppResult.Failure(AppError.NotFound)
 
-            val author = getAuthor(userId) ?: return@withContext AppResult.Failure(AppError.NotFound)
+            val author =
+                getAuthor(userId) ?: return@withContext AppResult.Failure(AppError.NotFound)
 
             AppResult.Success(postResponse.toDomain(author))
         } catch (e: Exception) {

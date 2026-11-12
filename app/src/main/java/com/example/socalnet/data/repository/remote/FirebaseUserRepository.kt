@@ -1,4 +1,4 @@
-package com.example.socalnet.data.repository
+package com.example.socalnet.data.repository.remote
 
 import com.example.socalnet.core.common.AppError
 import com.example.socalnet.core.common.AppResult
@@ -6,7 +6,7 @@ import com.example.socalnet.core.model.User
 import com.example.socalnet.core.utils.AppDispatchers
 import com.example.socalnet.data.dto.UserResponse
 import com.example.socalnet.data.mapper.toDomain
-import com.example.socalnet.domain.repository.UserRepository
+import com.example.socalnet.domain.repository.remote.UserRepository
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.firestore
@@ -81,7 +81,10 @@ class FirebaseUserRepository @Inject constructor(
             } else if (avatarUrl != null) {
                 if (avatarPublicId == null) {
                     return@withContext AppResult.Failure(
-                        AppError.Validation(AppError.Validation.Field.NAME, "Не передан publicId для аватара")
+                        AppError.Validation(
+                            AppError.Validation.Field.NAME,
+                            "Не передан publicId для аватара"
+                        )
                     )
                 }
                 updates["avatarUrl"] = avatarUrl
