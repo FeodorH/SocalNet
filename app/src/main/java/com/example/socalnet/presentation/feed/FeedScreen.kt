@@ -12,14 +12,12 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.socalnet.core.common.UiState
 import com.example.socalnet.core.model.FeedType
 import com.example.socalnet.core.model.ReactionType
 import com.example.socalnet.presentation.feed.components.PostCard
 import com.example.socalnet.presentation.feed.model.FeedUiState
-import com.example.socalnet.presentation.preview.fakeFeed
 
 @Composable
 fun FeedScreen(
@@ -49,7 +47,6 @@ fun FeedScreen(
             )
         }
 
-        // Верхнеуровневое состояние — ровно то, для чего создан UiState
         when (state) {
             UiState.Loading -> LoadingState()
             UiState.Empty -> EmptyState(
@@ -176,67 +173,5 @@ private fun ErrorState(message: String, onRetry: () -> Unit) {
         Text(message, style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(12.dp))
         Button(onClick = onRetry) { Text("Повторить") }
-    }
-}
-
-// Preview
-
-private val userContentState: UiState<FeedUiState> = UiState.Content(
-    FeedUiState(
-        selectedTab = FeedType.GENERAL,
-        posts = fakeFeed,
-        hasMore = true,
-    )
-)
-
-@Preview(showBackground = true, heightDp = 1200)
-@Composable
-private fun FeedUserPreview() {
-    MaterialTheme {
-        FeedScreen(
-            state = userContentState,
-            role = true,
-            onTabSelected = {}, onReactionClick = { _, _ -> },
-            onRefresh = {}, onLoadMore = {},
-        )
-    }
-}
-
-@Preview(showBackground = true, heightDp = 1200)
-@Composable
-private fun FeedGuestPreview() {
-    MaterialTheme {
-        FeedScreen(
-            state = userContentState,
-            role = false,
-            onTabSelected = {}, onReactionClick = { _, _ -> },
-            onRefresh = {}, onLoadMore = {},
-        )
-    }
-}
-
-@Preview(showBackground = true, heightDp = 800)
-@Composable
-private fun FeedEmptyPreview() {
-    MaterialTheme {
-        FeedScreen(
-            state = UiState.Empty,
-            role = true,
-            onTabSelected = {}, onReactionClick = { _, _ -> },
-            onRefresh = {}, onLoadMore = {},
-        )
-    }
-}
-
-@Preview(showBackground = true, heightDp = 800)
-@Composable
-private fun FeedErrorPreview() {
-    MaterialTheme {
-        FeedScreen(
-            state = UiState.Error("Не удалось загрузить ленту"),
-            role = true,
-            onTabSelected = {}, onReactionClick = { _, _ -> },
-            onRefresh = {}, onLoadMore = {},
-        )
     }
 }

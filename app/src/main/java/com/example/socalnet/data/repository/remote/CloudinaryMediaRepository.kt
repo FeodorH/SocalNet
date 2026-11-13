@@ -11,7 +11,9 @@ import com.example.socalnet.core.model.ImageUploadResult
 import com.example.socalnet.core.utils.AppDispatchers
 import com.example.socalnet.data.dto.CloudinaryUploadResult
 import com.example.socalnet.data.remote.cloudinary.CloudinaryApi
+import com.example.socalnet.domain.provider.ImageMetadataProvider
 import com.example.socalnet.domain.repository.remote.MediaRepository
+import com.example.socalnet.domain.vaildation.ImageValidator
 import jakarta.inject.Named
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.callbackFlow
@@ -23,6 +25,7 @@ import kotlin.collections.get
 class CloudinaryMediaRepository @Inject constructor(
     private val dispatchers: AppDispatchers,
     private val cloudinaryApi: CloudinaryApi,
+    private val metadataProvider: ImageMetadataProvider,
     @Named("cloudinaryCloudName") private val cloudName: String,
     @Named("cloudinaryUploadPreset") private val uploadPreset: String,
 ) : MediaRepository {
@@ -30,6 +33,15 @@ class CloudinaryMediaRepository @Inject constructor(
     override suspend fun upload(local: ImageRef.Local, path: String): AppResult<ImageUploadResult> =
         withContext(dispatchers.io) {
             try {
+                val metadata = when (val r = metadataProvider.read(local.uri)) {
+                    is AppResult.Success -> r.data
+                    is AppResult.Failure -> return@withContext r
+                }
+
+                ImageValidator.validate(metadata)?.let {
+                    return@withContext AppResult.Failure(it)
+                }
+
                 val uri = Uri.parse(local.uri)
                 val response = uploadFlow(uri, path).first()
                 AppResult.Success(

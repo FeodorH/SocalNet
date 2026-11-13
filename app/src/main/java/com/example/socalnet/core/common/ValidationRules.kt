@@ -10,7 +10,4 @@ object ValidationRules {
     const val MAX_POST_IMAGES = 10
     const val MAX_IMAGE_BYTES = 10L * 1024 * 1024
     val ALLOWED_IMAGE_MIME = setOf("image/jpeg", "image/png", "image/gif")
-
-    const val FEED_PAGE_SIZE = 10
-    const val MAX_CACHED_POSTS = 100
 }

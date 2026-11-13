@@ -9,11 +9,11 @@ object PostValidator {
         imageCount: Int) : AppError.Validation? =
         when{
             text.isBlank() ->
-                AppError.Validation(AppError.Validation.Field.TEXT, "Post can't been blank!")
+                AppError.Validation(AppError.Validation.Field.TEXT, "Название поста не может быть пустым")
             text.length > ValidationRules.MAX_POST_TEXT ->
-                AppError.Validation(AppError.Validation.Field.TEXT, "Maximum post's length is ${ValidationRules.MAX_POST_TEXT}!")
+                AppError.Validation(AppError.Validation.Field.TEXT, "Максимальная длина поста: ${ValidationRules.MAX_POST_TEXT}")
             imageCount > ValidationRules.MAX_POST_IMAGES ->
-                AppError.Validation(AppError.Validation.Field.IMAGES, "No more ${ValidationRules.MAX_POST_IMAGES} images!")
+                AppError.Validation(AppError.Validation.Field.IMAGES, "Не более ${ValidationRules.MAX_POST_IMAGES} изображений")
             else ->
                 null
         }

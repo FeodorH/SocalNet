@@ -2,6 +2,7 @@ package com.example.socalnet.domain.usecase
 
 import com.example.socalnet.core.common.AppResult
 import com.example.socalnet.core.common.ValidationRules
+import com.example.socalnet.core.common.WorkingRules
 import com.example.socalnet.core.model.FeedType
 import com.example.socalnet.core.model.PageCursor
 import com.example.socalnet.core.model.Post
@@ -42,6 +43,6 @@ class SyncFeedUseCase @Inject constructor(
     ): AppResult<PageCursor?> = feeds.syncFeed(
         type = type,
         cursor = cursor,
-        pageSize = ValidationRules.FEED_PAGE_SIZE
+        pageSize = WorkingRules.FEED_PAGE_SIZE
     )
 }

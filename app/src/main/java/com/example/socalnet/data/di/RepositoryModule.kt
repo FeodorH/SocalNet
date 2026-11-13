@@ -1,5 +1,6 @@
 package com.example.socalnet.data.di
 
+import com.example.socalnet.data.provider.ImageMetadataProviderImpl
 import com.example.socalnet.data.repository.common.OfflineFirstAuthRepositoryImpl
 import com.example.socalnet.data.repository.common.OfflineFirstFeedRepositoryImpl
 import com.example.socalnet.data.repository.common.OfflineFirstPostRepositoryImpl
@@ -13,6 +14,7 @@ import com.example.socalnet.data.repository.remote.FirebaseReactionRepository
 import com.example.socalnet.data.repository.remote.FirebaseSubscriptionRepository
 import com.example.socalnet.data.repository.remote.FirebaseUserRepository
 import com.example.socalnet.data.repository.common.OfflineFirstUserRepositoryImpl
+import com.example.socalnet.domain.provider.ImageMetadataProvider
 import com.example.socalnet.domain.repository.remote.AuthRepository
 import com.example.socalnet.domain.repository.remote.FeedRepository
 import com.example.socalnet.domain.repository.remote.MediaRepository
@@ -56,6 +58,11 @@ abstract class RepositoryModule {
 
     @Binds @Singleton
     abstract fun bindMediaRepository(impl: CloudinaryMediaRepository): MediaRepository
+
+    @Binds @Singleton
+    abstract fun bindImageMetadataProvider(
+        impl: ImageMetadataProviderImpl
+    ): ImageMetadataProvider
 
     @Binds @Singleton
     abstract fun bindOfflineFirstAuthRepository(
